@@ -58,14 +58,16 @@ namespace cli.Models
         {
             if (args.Length == 0) throw new ArgumentException("no arguments specified");
 
+            if (Verbs.TryGetValue(args[0], out var commandVerb) && (args.Length == 1 || args.Next().IsOption()))
+            {
+                return commandVerb.Execute(new Args(commandVerb.Options, args.Skip(1).ToArray()));
+            }
+
             if (Groups.TryGetValue(args[0], out var commandGroup))
             {
                 return commandGroup.Resolve(args.Skip(1).ToArray());
             }
-            if (Verbs.TryGetValue(args[0], out var commandVerb))
-            {
-                return commandVerb.Execute(new Args(commandVerb.Options, args.Skip(1).ToArray()));
-            }
+            
             // If neither are found, try to find a wildcard option
             if (Verbs.TryGetValue(CommandConstants.WildCard, out var wildcardVerb))
             {

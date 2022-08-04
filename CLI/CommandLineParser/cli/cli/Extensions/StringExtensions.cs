@@ -26,5 +26,17 @@ namespace cli.Extensions
                 throw new ArgumentException($"unable to convert value {src} to type {typeof(Ty).FullName}");
             }
         }
+
+        public static string Next(this string[] arr)
+        {
+            if (arr == null) throw new ArgumentNullException(nameof(arr));  
+            if (arr.Length < 2) return "";
+            return arr[1];
+        }
+
+        public static bool IsOption(this string src)
+        {
+            return src?.StartsWith("-") == true;
+        }
     }
 }
