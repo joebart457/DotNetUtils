@@ -5,7 +5,7 @@ internal class Program
 {
 	static void Main(string[] args)	{
 		var t = new Test();
-		new string[] {"please", "doThis", "-f", "--strArg", "Hello world"}.Resolve(t);
+		new string[] {"doThis", "please", "-f", "--strArg", "Hello world"}.Resolve(t);
 
 	}
 }

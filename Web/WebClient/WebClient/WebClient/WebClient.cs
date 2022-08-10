@@ -32,7 +32,7 @@ namespace Web
             return await (await GetAsync(resourceUri)).ToResult<TyResult>();
         }
 
-        private static async Task<HttpResponseMessage> PostAsync<TyRequestData>(string resourceUri, TyRequestData data)
+        public static async Task<HttpResponseMessage> PostAsync<TyRequestData>(string resourceUri, TyRequestData data)
         {
             HttpClient httpClient = new HttpClient();
             var request = new HttpRequestMessage
@@ -45,7 +45,7 @@ namespace Web
             return await httpClient.SendAsync(request).ConfigureAwait(false);
         }
 
-        private static async Task<TyResult> PostAsync<TyRequestData, TyResult>(string resourceUri, TyRequestData data)
+        public static async Task<TyResult> PostAsync<TyRequestData, TyResult>(string resourceUri, TyRequestData data)
         {
             return await (await PostAsync(resourceUri, data)).ToResult<TyResult>();
         }

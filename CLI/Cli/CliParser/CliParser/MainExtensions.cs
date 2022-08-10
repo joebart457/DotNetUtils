@@ -37,6 +37,30 @@ namespace CliParser
             }
         }
 
+        public static void ResolveWithTryCatch<Ty>(this string[] args, Action<Exception> callback) where Ty : class
+        {
+            try
+            {
+                Resolve<Ty>(args);
+            }
+            catch (Exception ex)
+            {
+                callback(ex);
+            }
+        }
+
+        public static void ResolveWithTryCatch<Ty>(this string[] args, Ty instance, Action<Exception> callback) where Ty : class
+        {
+            try
+            {
+                Resolve(args, instance);
+            }
+            catch (Exception ex)
+            {
+                callback(ex);
+            }
+        }
+
         internal static CliCommand ParseCommand<Ty>(string[] args) where Ty : class
         {
             Type type = typeof(Ty);

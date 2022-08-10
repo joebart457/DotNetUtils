@@ -7,12 +7,16 @@ using System.Threading.Tasks;
 
 namespace AppSettingsManager
 {
-    public static class AppSettings<Ty> where Ty : class, new()
+    public static class AppSettings
     {
-        public static Ty Instance { get; set; } = new Ty();
-        public static void Configure(string settingsPath = "app.json")
+        public static Ty Get<Ty>(string settingsPath = "app.json") where Ty : class, new()
         {
-            Instance = JsonConvert.DeserializeObject<Ty>(settingsPath) ?? new Ty();
+            return JsonConvert.DeserializeObject<Ty>(File.ReadAllText(settingsPath)) ?? new Ty();
+        }
+
+        public static void Save<Ty>(Ty settingsObject, string settingsPath = "app.json") where Ty : class, new()
+        {
+            File.WriteAllText(settingsPath, JsonConvert.SerializeObject(settingsObject));
         }
     }
 }

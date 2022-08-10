@@ -1,0 +1,15 @@
+12:36 PM 8/1/2022================================================================================================
+
+
+[Entry("wcc")]
+public static class PackageManager{
+	
+	[Command("add")]
+	[SubCommand("package")]
+	public static void AddPackage([Option] string name, [Option] string version, [Option] string path){
+
+	}
+}
+
+
+	

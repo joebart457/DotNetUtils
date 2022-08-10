@@ -39,11 +39,14 @@ namespace CliParser
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
     public class OptionAttribute : System.Attribute
     {
-        public string Abbr { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string Description { get; set; } = "";
-        public OptionAttribute()
+        public string? Abbr { get; set; } = null;
+        public string? Name { get; set; } = null;
+        public string? Description { get; set; } = null;
+        public OptionAttribute(string? name = null, string? abbr = null, string? description = null)
         {
+            Abbr = abbr;
+            Name = name;
+            Description = description;
         }
     }
 }

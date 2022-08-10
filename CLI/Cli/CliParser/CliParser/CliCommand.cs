@@ -34,13 +34,15 @@ namespace CliParser
         public void Run<Ty>(string[] args)
         {
             var arguments = ParseArguments(args);
-            _methodInfo.Invoke(typeof(Ty), arguments.ToArgumentArray());
+            var result = _methodInfo.Invoke(typeof(Ty), arguments.ToArgumentArray());
+            if (result is Task task) task.Wait();
         }
 
         public void Run<Ty>(string[] args, Ty instance) where Ty : class
         {
             var arguments = ParseArguments(args);
-            _methodInfo.Invoke(instance, arguments.ToArgumentArray());
+            var result = _methodInfo.Invoke(instance, arguments.ToArgumentArray());
+            if (result is Task task) task.Wait();
         }
 
         public Args ParseArguments(string[] args)
@@ -171,9 +173,9 @@ namespace CliParser
                 {
                     if (attribute is OptionAttribute option)
                     {
-                        cmdParam.Abbreviation = option.Abbr;
-                        cmdParam.Name = option.Name;
-                        cmdParam.Description = option.Description;
+                        cmdParam.Abbreviation = option.Abbr ?? cmdParam.Abbreviation;
+                        cmdParam.Name = option.Name ?? cmdParam.Name;
+                        cmdParam.Description = option.Description ?? cmdParam.Description;
                         break;
                     }
                 }

@@ -11,8 +11,9 @@ namespace CliParser
     {
         [SubCommand("please")]
         [Command("doThis")]
-        public void DoThis(string strArg, bool flag = false)
+        public async Task DoThis(string strArg, bool flag = false)
         {
+            await Task.Run(() => Thread.Sleep(1000));
             Console.Write($"{strArg}: {flag}");
         }
     }
