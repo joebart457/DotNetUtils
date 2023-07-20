@@ -73,6 +73,24 @@ namespace Web
             return await response.ToResult<TyResult>();
         }
 
+        public static async Task<HttpResponseMessage> PutAsync<TyRequestData>(string resourceUri, TyRequestData data)
+        {
+            HttpClient httpClient = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Put,
+                RequestUri = CreateUri(resourceUri),
+                Content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json"),
+            };
+
+            return await httpClient.SendAsync(request).ConfigureAwait(false);
+        }
+
+        public static async Task<TyResult> PutAsync<TyRequestData, TyResult>(string resourceUri, TyRequestData data)
+        {
+            return await (await PutAsync(resourceUri, data)).ToResult<TyResult>();
+        }
+
         private static Uri CreateUri(string resourceUri)
         {
             return new Uri(AddBase(resourceUri));

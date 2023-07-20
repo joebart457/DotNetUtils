@@ -67,13 +67,17 @@ namespace CliParser
             if (!Attribute.IsDefined(type, typeof(EntryAttribute))) throw new ArgumentException("cli entry class must have Entry(\"exeName\" ) defined");
             var commands = type.GetMethods().Where(m => Attribute.IsDefined(m, typeof(CommandAttribute)));
             var cliCommands = commands.Select(c => new CliCommand(c));
-            var resolvable = cliCommands.Where(c => c.Resolvable(args));
-            if (!resolvable.Any()) throw new CliValidationException($"unable to resolve command {string.Join(' ', args)}");
+            var resolvable = cliCommands.Where(c => c.Resolvable(args) && c.Path.Count > 0);
+            if (!resolvable.Any())
+            {
+                resolvable = cliCommands.Where(c => c.Resolvable(args) && c.Path.Count == 0);
+                if (!resolvable.Any())  throw new CliValidationException($"unable to resolve command {string.Join(' ', args)}");
+            }
             if (resolvable.Count() > 1) throw new CliValidationException($"expected only 1 resolvable command but got {resolvable.Count()}");
             return resolvable.First();
         }
 
-        internal static string GetHelpText<Ty>()
+        public static string GetHelpText<Ty>()
         {
             try
             {
@@ -86,7 +90,7 @@ namespace CliParser
                 sb.AppendLine("Options:");
                 var commands = type.GetMethods().Where(m => Attribute.IsDefined(m, typeof(CommandAttribute)));
                 var cliCommands = commands.Select(c => new CliCommand(c));
-                sb.AppendLine(string.Join('\n', cliCommands.OrderBy(c => c.Path).Select(c => c.ToHelpString())));
+                sb.AppendLine(string.Join('\n', cliCommands.OrderBy(c => c.ToHelpString()).Select(c => c.ToHelpString())));
                 return sb.ToString();
             }
             catch (Exception)

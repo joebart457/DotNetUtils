@@ -20,7 +20,7 @@ namespace CliParser
     public class CommandAttribute : System.Attribute
     {
         public string Verb { get; set; } = "";
-        public CommandAttribute(string verb)
+        public CommandAttribute(string verb = "")
         {
             Verb = verb;
         }

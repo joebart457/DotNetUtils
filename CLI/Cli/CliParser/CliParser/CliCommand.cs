@@ -22,9 +22,9 @@ namespace CliParser
             var parameters = GetParameters(methodInfo);
             parameters.ForEach(p =>
             {
-                if (ParametersByName.ContainsKey(p.Name)) throw new Exception($"redefinition of option {p}");
-                if (ParametersByName.ContainsKey(p.Abbreviation)) throw new Exception($"redefinition of option {p}");
-                if (ParametersByPosition.ContainsKey(p.Position)) throw new Exception($"redifition of positional option {p}");
+                if (ParametersByName.ContainsKey(p.Name)) throw new CliValidationException($"Internal redefinition of option {p}");
+                if (ParametersByName.ContainsKey(p.Abbreviation)) throw new CliValidationException($"Internal redefinition of option {p}");
+                if (ParametersByPosition.ContainsKey(p.Position)) throw new CliValidationException($"Internal redifition of positional option {p}");
                 ParametersByPosition.Add(p.Position, p);
                 ParametersByName.Add(p.Name, p);
                 ParametersByName.Add(p.Abbreviation, p);
@@ -143,7 +143,8 @@ namespace CliParser
             {
                 if (attribute is CommandAttribute cmd)
                 {
-                    path.Insert(0, cmd.Verb);
+                    if (!string.IsNullOrWhiteSpace(cmd.Verb))
+                        path.Insert(0, cmd.Verb);
                 }
                 if (attribute is SubCommandAttribute subCmd)
                 {
