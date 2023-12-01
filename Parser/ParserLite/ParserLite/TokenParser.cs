@@ -1,10 +1,12 @@
-﻿using ParserLite.Interfaces;
+﻿using ParserLite.Exceptions;
+using ParserLite.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TokenizerCore.Interfaces;
+using TokenizerCore.Model;
 
 namespace ParserLite
 {
@@ -76,7 +78,7 @@ namespace ParserLite
         public IToken Consume(string type, string errorMessage)
         {
             var copy = _current;
-            if (!AdvanceIfMatch(type) || copy == null) throw new Exception(errorMessage);
+            if (!AdvanceIfMatch(type) || copy == null) throw new ParsingException(_current == null? PreviousOrDefault(new Token("", "", 0, 0)) : _current, errorMessage);
             return copy;
         }
 
@@ -99,9 +101,27 @@ namespace ParserLite
 
         public IToken Previous()
         {
-            if (_index - 1 >= _tokens.Count())
+            if (_index - 1 >= _tokens.Count() || _index - 1 < 0)
             {
                 throw new IndexOutOfRangeException("failed getting previous token");
+            }
+            return _tokens[_index - 1];
+        }
+
+        public IToken? PreviousOrDefault()
+        {
+            if (_index - 1 >= _tokens.Count() || _index - 1 < 0)
+            {
+                return default;
+            }
+            return _tokens[_index - 1];
+        }
+
+        public IToken PreviousOrDefault(IToken @default)
+        {
+            if (_index - 1 >= _tokens.Count() || _index -1  < 0)
+            {
+                return @default;
             }
             return _tokens[_index - 1];
         }

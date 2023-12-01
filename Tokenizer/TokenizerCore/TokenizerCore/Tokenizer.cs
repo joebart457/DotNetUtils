@@ -26,6 +26,7 @@ namespace TokenizerCore
 		public bool AllOneLine { get; set; }
 		public bool AllowNegatives { get; set; } = false;
 		public char NegativeChar { get; set; } = '-';
+		public bool NewlinesAsTokens { get; set; } = false;
 		public static TokenizerSettings Default { get { return new TokenizerSettings(); } }
 	}
 
@@ -100,8 +101,18 @@ namespace TokenizerCore
 				{
 					if (_settings.SkipWhiteSpace)
 					{
-						Advance();
-						continue;
+						if (!_settings.NewlinesAsTokens)
+						{
+                            Advance();
+                            continue;
+                        }
+						if (LookAhead(1) == "\r\n")
+						{
+							Advance();
+							Advance();
+							return new Token(BuiltinTokenTypes.Newline, "\r\n", _nRow, _nColumn); 
+						}
+
 					}
 					else
 					{
@@ -133,6 +144,7 @@ namespace TokenizerCore
                 {
                     return Word();
                 }
+
 
                 foreach (TokenizerRule rule in _rules)
 				{

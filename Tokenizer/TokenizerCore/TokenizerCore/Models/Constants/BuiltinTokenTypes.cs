@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace TokenizerCore.Models.Constants
 {
-    internal static class BuiltinTokenTypes
+    public static class BuiltinTokenTypes
     {
         public const string Space = "Space";
         public const string Tab = "Tab";
         public const string CarriageReturn = "CarriageReturn";
         public const string LineFeed = "LineFeed";
-
-        public const string Word = "TTWord";
-        public const string String = "TTString";
-        public const string Integer = "TTInteger";
-        public const string UnsignedInteger = "TTUnsignedInteger";
-        public const string Double = "TTDouble";
-        public const string Float = "TTFloat";
+        public const string Newline = "Newline"; // only used when settings.NewlinesAsTokens == TRUE
+        public const string Word = "Word";
+        public const string String = "String";
+        public const string Integer = "Integer";
+        public const string UnsignedInteger = "UnsignedInteger";
+        public const string Double = "Double";
+        public const string Float = "Float";
 
         public const string EndOfLineComment = "EndOfLineComment";
         public const string MultiLineComment = "MultiLineComment";
