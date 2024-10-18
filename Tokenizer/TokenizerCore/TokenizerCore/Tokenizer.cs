@@ -433,7 +433,15 @@ namespace TokenizerCore
 			bool bIsFloat = false;
 			bool bIsDouble = false;
 			bool bIsUnsigned = false;
-			while (!_bAtEnd && (Char.IsDigit(_cCurrent) || (_cCurrent == '.' && !bHadDecimal) || (_cCurrent == 'f' && bHadDecimal) || (_cCurrent == 'd' && bHadDecimal) || (_cCurrent == 'u' && !bHadDecimal) || (_settings.AllowNegatives && _cCurrent == _settings.NegativeChar && result.Length == 0)))
+			bool bIsByte = false;
+			while (!_bAtEnd && 
+				(Char.IsDigit(_cCurrent) 
+				|| (_cCurrent == '.' && !bHadDecimal) 
+				|| (_cCurrent == 'f' && bHadDecimal) 
+				|| (_cCurrent == 'd' && bHadDecimal) 
+				|| (_cCurrent == 'u' && !bHadDecimal) 
+				|| (_cCurrent == 'b' && !bHadDecimal) 
+				|| (_settings.AllowNegatives && _cCurrent == _settings.NegativeChar && result.Length == 0)))
 			{
 				if (_cCurrent == '.')
 				{
@@ -457,8 +465,14 @@ namespace TokenizerCore
 					Advance();
 					break;
 				}
+                if (_cCurrent == 'b')
+                {
+                    bIsByte = true;
+                    Advance();
+                    break;
+                }
 
-				result.Append(_cCurrent);
+                result.Append(_cCurrent);
 				Advance();
 			}
 
@@ -482,6 +496,11 @@ namespace TokenizerCore
 			{
 				type = BuiltinTokenTypes.UnsignedInteger;
 			}
+			else if (bIsByte)
+			{
+				type = BuiltinTokenTypes.Byte;
+			}
+
 			return new Token(type, result.ToString(), _nRow, _nColumn);
 		}
 

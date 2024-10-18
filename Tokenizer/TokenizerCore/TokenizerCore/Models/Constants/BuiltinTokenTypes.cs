@@ -19,6 +19,7 @@ namespace TokenizerCore.Models.Constants
         public const string UnsignedInteger = "UnsignedInteger";
         public const string Double = "Double";
         public const string Float = "Float";
+        public const string Byte = "Byte";
 
         public const string EndOfLineComment = "EndOfLineComment";
         public const string MultiLineComment = "MultiLineComment";
