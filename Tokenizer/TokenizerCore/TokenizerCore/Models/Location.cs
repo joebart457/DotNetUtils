@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using TokenizerCore.Interfaces;
 
 namespace TokenizerCore.Model
 {
-    internal class Location: ILocation
+    public class Location: ILocation
     {
         public int Line { get; set; }
         public int Column { get; set; }
@@ -17,9 +13,25 @@ namespace TokenizerCore.Model
             Column = column;
         }
 
+        public override int GetHashCode()
+        {
+            return Line.GetHashCode();
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is ILocation location)
+            {
+                return Line == location.Line && Column == location.Column;
+            }
+            return false;
+        }
+
         public override string ToString()
         {
             return $"Ln. {Line} Col. {Column}";
         }
+
+        public static Location Zero => new Location(0, 0);
     }
 }

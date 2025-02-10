@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using TokenizerCore.Interfaces;
 
 namespace ParserLite.Exceptions
@@ -17,9 +13,9 @@ namespace ParserLite.Exceptions
             Token = token;
         }
 
-        public string What()
+        public override string ToString()
         {
-            return $"[{Token.Location}] {Message}";
+            return $"[Ln. {Token.Start.Line}, Col. {Token.Start.Column}] {Message}";
         }
     }
 }

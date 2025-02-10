@@ -37,6 +37,21 @@ namespace CliParser
             }
         }
 
+        public static TResult ResolveWithReturnObject<Ty, TResult>(this string[] args, Ty instance, TResult @default) where Ty : class
+        {
+            try
+            {
+                var cliCommand = ParseCommand<Ty, TResult>(args);
+                return cliCommand.Run(args, instance);
+            }
+            catch (CliValidationException ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(GetHelpText<Ty>());
+                return @default;
+            }
+        }
+
         public static void ResolveWithTryCatch<Ty>(this string[] args, Action<Exception> callback) where Ty : class
         {
             try
@@ -61,6 +76,19 @@ namespace CliParser
             }
         }
 
+        public static TResult ResolveWithTryCatch<Ty, TResult>(this string[] args, Ty instance, TResult @default, Action<Exception> callback) where Ty : class
+        {
+            try
+            {
+                return ResolveWithReturnObject(args, instance, @default);
+            }
+            catch (Exception ex)
+            {
+                callback(ex);
+                return @default;
+            }
+        }
+
         internal static CliCommand ParseCommand<Ty>(string[] args) where Ty : class
         {
             Type type = typeof(Ty);
@@ -72,6 +100,22 @@ namespace CliParser
             {
                 resolvable = cliCommands.Where(c => c.Resolvable(args) && c.Path.Count == 0);
                 if (!resolvable.Any())  throw new CliValidationException($"unable to resolve command {string.Join(' ', args)}");
+            }
+            if (resolvable.Count() > 1) throw new CliValidationException($"expected only 1 resolvable command but got {resolvable.Count()}");
+            return resolvable.First();
+        }
+
+        internal static CliCommand<TResult> ParseCommand<Ty, TResult>(string[] args) where Ty : class
+        {
+            Type type = typeof(Ty);
+            if (!Attribute.IsDefined(type, typeof(EntryAttribute))) throw new ArgumentException("cli entry class must have Entry(\"exeName\") defined");
+            var commands = type.GetMethods().Where(m => Attribute.IsDefined(m, typeof(CommandAttribute)) && m.ReturnType == typeof(TResult));
+            var cliCommands = commands.Select(c => new CliCommand<TResult>(c));
+            var resolvable = cliCommands.Where(c => c.Resolvable(args) && c.Path.Count > 0);
+            if (!resolvable.Any())
+            {
+                resolvable = cliCommands.Where(c => c.Resolvable(args) && c.Path.Count == 0);
+                if (!resolvable.Any()) throw new CliValidationException($"unable to resolve command {string.Join(' ', args)}");
             }
             if (resolvable.Count() > 1) throw new CliValidationException($"expected only 1 resolvable command but got {resolvable.Count()}");
             return resolvable.First();

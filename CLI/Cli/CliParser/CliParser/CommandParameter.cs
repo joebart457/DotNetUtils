@@ -22,9 +22,9 @@ namespace CliParser
             return $"({Position}) -{Abbreviation} | --{Name}";
         }
 
-        public string ToHelpString()
+        public string ToHelpString(int maximumAbbreviationLength = 1)
         {
-            return $" -{Abbreviation} | --{Name} {ParameterType.Name} {(IsRequired ? "*Required*" : "")}: {Description}";
+            return $" -{Abbreviation.PadRight(maximumAbbreviationLength, ' ')} | --{Name} {ParameterType.Name} {(IsRequired ? "*Required*" : "")}: {Description}";
         }
     }
 }

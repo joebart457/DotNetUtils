@@ -6,7 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>2.1.0</Version>
+    <Version>3.1.0</Version>
+    <Description>Package to help with parsing and resolving of command line arguments.</Description>
   </PropertyGroup>
 
 </Project>

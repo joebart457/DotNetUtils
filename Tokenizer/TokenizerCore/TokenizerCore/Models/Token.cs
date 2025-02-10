@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,25 +12,29 @@ namespace TokenizerCore.Model
     {
         public string Type { get; set; }
         public string Lexeme { get; set; }
-        public ILocation Location { get; set; }
+        public ILocation Start { get; set; }
+        public ILocation End { get; set; }
 
-        public Token(TokenizerRule rule, int line, int column)
+        public Token(TokenizerRule rule, ILocation start, ILocation end)
         {
             Lexeme = rule.ReplaceWith;
             Type = rule.Type;
-            Location = new Location(line, column);
+            Start = start;
+            End = end;
         }
 
-        public Token(string type, string lexeme, int nRow, int nColumn)
+        public Token(string type, string lexeme, ILocation start, ILocation end)
         {
             Lexeme = lexeme;
             Type = type;
-            Location = new Location(nRow, nColumn);
+            Start = start;
+            End = end;
         }
 
         public override string ToString()
         {
-            return $"Token({Type}|{Lexeme}) at {Location}";
+            return $"Token({Type}, {Lexeme}) at {Start}";
         }
+
     }
 }

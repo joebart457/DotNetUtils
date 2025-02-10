@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using TokenizerCore.Interfaces;
 using TokenizerCore.Model;
 using TokenizerCore.Models.Constants;
@@ -15,6 +11,10 @@ namespace TokenizerCore
 		/// Specifies which symbols are allowed inside of words
 		/// </summary>
 		public string WordIncluded { get; set; } = "";
+		/// <summary>
+		/// Specifies which characters (besides alphabetical characters) can be used to start a word 
+		/// </summary>
+		public string WordStarters { get; set; } = "_";
 		public string CatchAllType { get; set; } = "";
 		public bool SkipWhiteSpace { get; set; } = true;
 		public bool CommentsAsTokens { get; set; } = false;
@@ -27,6 +27,12 @@ namespace TokenizerCore
 		public bool AllowNegatives { get; set; } = false;
 		public char NegativeChar { get; set; } = '-';
 		public bool NewlinesAsTokens { get; set; } = false;
+		public int TabSize { get; set; } = 4;
+
+		// Allows for replacing of escape sequences in strings with their actual value
+		// IE \\ will be replaced with \
+		// Default true.
+		public bool ParseEscapeSequences { get; set; } = true;
 		public static TokenizerSettings Default { get { return new TokenizerSettings(); } }
 	}
 
@@ -91,7 +97,7 @@ namespace TokenizerCore
 		{
 			while (!_bAtEnd)
 			{
-
+				var start = new Location(_nRow, _nColumn);
 				if (_cCurrent == '\0')
 				{
 					Advance();
@@ -109,8 +115,8 @@ namespace TokenizerCore
 						if (LookAhead(1) == "\r\n")
 						{
 							Advance();
-							Advance();
-							return new Token(BuiltinTokenTypes.Newline, "\r\n", _nRow, _nColumn); 
+							var end = Advance();
+							return new Token(BuiltinTokenTypes.Newline, "\r\n", start, end); 
 						}
 
 					}
@@ -118,29 +124,29 @@ namespace TokenizerCore
 					{
 						if (_cCurrent == ' ')
 						{
-							Advance();
-							return new Token(BuiltinTokenTypes.Space, _cCurrent.ToString(), _nRow, _nColumn);
+							var end = Advance();
+							return new Token(BuiltinTokenTypes.Space, _cCurrent.ToString(), start, end);
 						}
 						if (_cCurrent == '\t')
 						{
-							Advance();
-							return new Token(BuiltinTokenTypes.Tab, _cCurrent.ToString(), _nRow, _nColumn);
+                            var end = Advance();
+                            return new Token(BuiltinTokenTypes.Tab, _cCurrent.ToString(), start, end);
 						}
 						if (_cCurrent == '\r')
 						{
-							Advance();
-							return new Token(BuiltinTokenTypes.CarriageReturn, _cCurrent.ToString(), _nRow, _nColumn);
+                            var end = Advance();
+                            return new Token(BuiltinTokenTypes.CarriageReturn, _cCurrent.ToString(), start, end);
 						}
 						if (_cCurrent == '\n')
 						{
-							Advance();
-							return new Token(BuiltinTokenTypes.LineFeed, _cCurrent.ToString(), _nRow, _nColumn);
+                            var end = Advance();
+                            return new Token(BuiltinTokenTypes.LineFeed, _cCurrent.ToString(), start, end);
 						}
 					}
 
 				}
 
-                if (_cCurrent == '_' || char.IsLetter(_cCurrent))
+                if (_cCurrent == '_' || char.IsLetter(_cCurrent) || _settings.WordStarters.Contains(_cCurrent))
                 {
                     return Word();
                 }
@@ -154,29 +160,29 @@ namespace TokenizerCore
 
 						if (rule.Type == BuiltinTokenTypes.EndOfLineComment)
 						{
-							return EndOfLineComment();
+							return EndOfLineComment(start);
 						}
 
 						if (rule.Type == BuiltinTokenTypes.MultiLineComment)
 						{
-							return GetEnclosedToken(rule);
+							return GetEnclosedToken(rule, start);
 						}
 
 						if (rule.Type == BuiltinTokenTypes.String && rule.IsEnclosed)
 						{
-							return GetStringToken(rule.EnclosingRight);
+							return GetStringToken(rule.EnclosingRight, start);
 						}
 
 						if (rule.IsEnclosed)
 						{
-							return GetEnclosedToken(rule);
+							return GetEnclosedToken(rule, start);
 						}
-
-						return new Token(rule, _nRow, _nColumn);
+						var end = CurrentLocation();
+						return new Token(rule, start, end);
 					}
 				}
 
-				if (_cCurrent == '_' || char.IsLetter(_cCurrent))
+				if (_cCurrent == '_' || char.IsLetter(_cCurrent) || _settings.WordStarters.Contains(_cCurrent))
 				{
 					return Word();
 				}
@@ -188,12 +194,12 @@ namespace TokenizerCore
 
 
 
-				Token result = new Token(string.IsNullOrWhiteSpace(_settings.CatchAllType) ? _cCurrent.ToString() : _settings.CatchAllType, _cCurrent.ToString(), _nRow, _nColumn);
+				Token result = new Token(string.IsNullOrWhiteSpace(_settings.CatchAllType) ? _cCurrent.ToString() : _settings.CatchAllType, _cCurrent.ToString(), start, CurrentLocation());
 				Advance();
 				return result;
 
 			}
-			return new Token(BuiltinTokenTypes.EndOfFile, BuiltinTokenTypes.EndOfFile, _nRow, _nColumn);
+			return new Token(BuiltinTokenTypes.EndOfFile, BuiltinTokenTypes.EndOfFile, CurrentLocation(), CurrentLocation());
 		}
 
 		private bool CompareRule(string a, TokenizerRule rule)
@@ -212,24 +218,25 @@ namespace TokenizerCore
 				Advance();
 			}
 		}
-		private void Advance()
+		private ILocation Advance()
 		{
-			Count();
+			var location = Count();
 			_nIndex++;
 			if (_nIndex >= _text.Length)
 			{
 				_bAtEnd = true;
-				return;
+				return location;
 			}
 			_cCurrent = _text[_nIndex];
+			return location;
 		}
 
-		private void Count()
+		private ILocation Count()
 		{
 			if (_settings.AllOneLine)
 			{
 				_nColumn++;
-				return;
+				return new Location(_nRow, _nColumn);
 			}
 			if (_cCurrent == '\n')
 			{
@@ -242,13 +249,14 @@ namespace TokenizerCore
 			}
 			else if (_cCurrent == '\t')
 			{
-				_nColumn += 4;
+				_nColumn += _settings.TabSize;
 			}
 			else
 			{
 				_nColumn++;
 			}
-		}
+            return new Location(_nRow, _nColumn);
+        }
 
 		private string LookAhead(int peek)
 		{
@@ -269,13 +277,13 @@ namespace TokenizerCore
 
 		// Multi-Character token processing
 
-		private Token GetStringToken(string enclosing)
+		private Token GetStringToken(string enclosing, ILocation start)
 		{
 			StringBuilder result = new StringBuilder();
 			bool bSlash = false;
 			while (!_bAtEnd && (LookAhead(enclosing.Length) != enclosing || bSlash))
 			{
-				if (_cCurrent == '\\' && !bSlash)
+				if (_cCurrent == '\\' && !bSlash && _settings.ParseEscapeSequences)
 				{
 					bSlash = true;
 					Advance();
@@ -359,10 +367,11 @@ namespace TokenizerCore
 			{
 				Advance(enclosing.Length);
 			}
-			return new Token(BuiltinTokenTypes.String, result.ToString(), _nRow, _nColumn);
+			var end = CurrentLocation();
+			return new Token(BuiltinTokenTypes.String, result.ToString(), start, end);
 		}
 
-		private Token GetEnclosedToken(TokenizerRule rule)
+		private Token GetEnclosedToken(TokenizerRule rule, ILocation start)
 		{
 			StringBuilder result = new StringBuilder();
 			while (!_bAtEnd && LookAhead(rule.EnclosingRight.Length) != rule.EnclosingRight)
@@ -370,16 +379,19 @@ namespace TokenizerCore
 				result.Append(_cCurrent);
 				Advance();
 			}
-
 			if (!_bAtEnd)
 			{
 				Advance(rule.EnclosingRight.Length);
 			}
-			return new Token(rule.Type, result.ToString(), _nRow, _nColumn);
+            var end = CurrentLocation();
+            return new Token(rule.Type, result.ToString(), start, end);
 		}
+
+		private ILocation CurrentLocation() => new Location(_nRow, _nColumn);
 
 		private Token Word()
 		{
+			var start = CurrentLocation();
 			StringBuilder result = new StringBuilder();
 
 			string type = BuiltinTokenTypes.Word;
@@ -391,8 +403,8 @@ namespace TokenizerCore
 				}
 				Advance();
 			}
-
-			var stringResult = result.ToString();
+			var end = CurrentLocation();
+            var stringResult = result.ToString();
 
             foreach (TokenizerRule rule in _rules)
             {
@@ -400,35 +412,35 @@ namespace TokenizerCore
                 {
                     if (rule.Type == BuiltinTokenTypes.EndOfLineComment)
                     {
-                        return EndOfLineComment();
+                        return EndOfLineComment(start);
                     }
 
                     if (rule.Type == BuiltinTokenTypes.MultiLineComment)
                     {
-                        return GetEnclosedToken(rule);
+                        return GetEnclosedToken(rule, start);
                     }
 
                     if (rule.Type == BuiltinTokenTypes.String && rule.IsEnclosed)
                     {
-                        return GetStringToken(rule.EnclosingRight);
+                        return GetStringToken(rule.EnclosingRight, start);
                     }
 
                     if (rule.IsEnclosed)
                     {
-                        return GetEnclosedToken(rule);
+                        return GetEnclosedToken(rule, start);
                     }
 
-                    return new Token(rule, _nRow, _nColumn);
+                    return new Token(rule, start, end);
                 }
             }
 
-            return new Token(type, stringResult, _nRow, _nColumn);
+            return new Token(type, stringResult, start, end);
 		}
 
 		private Token Number()
 		{
 			StringBuilder result = new StringBuilder();
-
+			var start = CurrentLocation();
 			bool bHadDecimal = false;
 			bool bIsFloat = false;
 			bool bIsDouble = false;
@@ -500,12 +512,12 @@ namespace TokenizerCore
 			{
 				type = BuiltinTokenTypes.Byte;
 			}
-
-			return new Token(type, result.ToString(), _nRow, _nColumn);
+			var end = CurrentLocation();
+			return new Token(type, result.ToString(), start, end);
 		}
 
 
-		private Token EndOfLineComment()
+		private Token EndOfLineComment(ILocation start)
 		{
 			StringBuilder result = new StringBuilder();
 			while (!_bAtEnd && _cCurrent != '\n' && _cCurrent != '\r')
@@ -513,7 +525,8 @@ namespace TokenizerCore
 				result.Append(_cCurrent);
 				Advance();
 			}
-			return new Token(BuiltinTokenTypes.EndOfLineComment, result.ToString(), _nRow, _nColumn);
+			var end = CurrentLocation();
+			return new Token(BuiltinTokenTypes.EndOfLineComment, result.ToString(), start, end);
 		}
 	}
 }

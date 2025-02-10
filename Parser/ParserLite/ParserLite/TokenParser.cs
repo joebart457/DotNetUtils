@@ -1,10 +1,5 @@
 ﻿using ParserLite.Exceptions;
 using ParserLite.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TokenizerCore.Interfaces;
 using TokenizerCore.Model;
 
@@ -31,6 +26,13 @@ namespace ParserLite
             _index = index;
             _atEnd = tokens.Count >= _index;
             _current = tokens.ElementAtOrDefault(index);
+        }
+
+        public void SeekBeginning()
+        {
+            _index = 0;
+            _atEnd = _tokens.Count == 0;
+            _current = _tokens.FirstOrDefault();
         }
 
         public void Advance()
@@ -78,7 +80,7 @@ namespace ParserLite
         public IToken Consume(string type, string errorMessage)
         {
             var copy = _current;
-            if (!AdvanceIfMatch(type) || copy == null) throw new ParsingException(_current == null? PreviousOrDefault(new Token("", "", 0, 0)) : _current, errorMessage);
+            if (!AdvanceIfMatch(type) || copy == null) throw new ParsingException(_current == null? PreviousOrDefault(new Token("", "", Location.Zero, Location.Zero)) : _current, errorMessage);
             return copy;
         }
 
